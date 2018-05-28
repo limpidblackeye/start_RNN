@@ -85,10 +85,10 @@ flags.DEFINE_integer("num_gpus", 1,
                      "If larger than 1, Grappler AutoParallel optimizer "
                      "will create multiple training replicas with each GPU "
                      "running one replica.")
-flags.DEFINE_string("rnn_mode", None,
-                    "The low level implementation of lstm cell: one of CUDNN, "
-                    "BASIC, and BLOCK, representing cudnn_lstm, basic_lstm, "
-                    "and lstm_block_cell classes.")
+# flags.DEFINE_string("rnn_mode", None,
+#                     "The low level implementation of lstm cell: one of CUDNN, "
+#                     "BASIC, and BLOCK, representing cudnn_lstm, basic_lstm, "
+#                     "and lstm_block_cell classes.")
 FLAGS = flags.FLAGS
 BASIC = "basic"
 CUDNN = "cudnn"
@@ -133,6 +133,7 @@ class PTBModel(object):
 
     output, state = self._build_rnn_graph(inputs, config, is_training)
 
+    # loss function
     softmax_w = tf.get_variable(
         "softmax_w", [size, vocab_size], dtype=data_type())
     softmax_b = tf.get_variable("softmax_b", [vocab_size], dtype=data_type())
@@ -169,44 +170,7 @@ class PTBModel(object):
     self._lr_update = tf.assign(self._lr, self._new_lr)
 
   def _build_rnn_graph(self, inputs, config, is_training):
-    if config.rnn_mode == CUDNN:
-      return self._build_rnn_graph_cudnn(inputs, config, is_training)
-    else:
       return self._build_rnn_graph_lstm(inputs, config, is_training)
-
-  def _build_rnn_graph_cudnn(self, inputs, config, is_training):
-    """Build the inference graph using CUDNN cell."""
-    inputs = tf.transpose(inputs, [1, 0, 2])
-    self._cell = tf.contrib.cudnn_rnn.CudnnLSTM(
-        num_layers=config.num_layers,
-        num_units=config.hidden_size,
-        input_size=config.hidden_size,
-        dropout=1 - config.keep_prob if is_training else 0)
-    params_size_t = self._cell.params_size()
-    self._rnn_params = tf.get_variable(
-        "lstm_params",
-        initializer=tf.random_uniform(
-            [params_size_t], -config.init_scale, config.init_scale),
-        validate_shape=False)
-    c = tf.zeros([config.num_layers, self.batch_size, config.hidden_size],
-                 tf.float32)
-    h = tf.zeros([config.num_layers, self.batch_size, config.hidden_size],
-                 tf.float32)
-    self._initial_state = (tf.contrib.rnn.LSTMStateTuple(h=h, c=c),)
-    outputs, h, c = self._cell(inputs, h, c, self._rnn_params, is_training)
-    outputs = tf.transpose(outputs, [1, 0, 2])
-    outputs = tf.reshape(outputs, [-1, config.hidden_size])
-    return outputs, (tf.contrib.rnn.LSTMStateTuple(h=h, c=c),)
-
-  def _get_lstm_cell(self, config, is_training):
-    if config.rnn_mode == BASIC:
-      return tf.contrib.rnn.BasicLSTMCell(
-          config.hidden_size, forget_bias=0.0, state_is_tuple=True,
-          reuse=not is_training)
-    if config.rnn_mode == BLOCK:
-      return tf.contrib.rnn.LSTMBlockCell(
-          config.hidden_size, forget_bias=0.0)
-    raise ValueError("rnn_mode %s not supported" % config.rnn_mode)
 
   def _build_rnn_graph_lstm(self, inputs, config, is_training):
     """Build the inference graph using canonical LSTM cells."""
@@ -214,7 +178,7 @@ class PTBModel(object):
     # initialized to 1 but the hyperparameters of the model would need to be
     # different than reported in the paper.
     def make_cell():
-      cell = self._get_lstm_cell(config, is_training)
+      cell = tf.contrib.rnn.LSTMBlockCell(config.hidden_size, forget_bias=0.0)
       if is_training and config.keep_prob < 1:
         cell = tf.contrib.rnn.DropoutWrapper(
             cell, output_keep_prob=config.keep_prob)
@@ -228,9 +192,9 @@ class PTBModel(object):
     # Simplified version of tf.nn.static_rnn().
     # This builds an unrolled LSTM for tutorial purposes only.
     # In general, use tf.nn.static_rnn() or tf.nn.static_state_saving_rnn().
-    #
+    # 
     # The alternative version of the code below is:
-    #
+    # 
     # inputs = tf.unstack(inputs, num=self.num_steps, axis=1)
     # outputs, state = tf.nn.static_rnn(cell, inputs,
     #                                   initial_state=self._initial_state)
@@ -436,8 +400,8 @@ def get_config():
     raise ValueError("Invalid model: %s", FLAGS.model)
   if FLAGS.rnn_mode:
     config.rnn_mode = FLAGS.rnn_mode
-  if FLAGS.num_gpus != 1 or tf.__version__ < "1.3.0" :
-    config.rnn_mode = BASIC
+  # if FLAGS.num_gpus != 1 or tf.__version__ < "1.3.0" :
+  #   config.rnn_mode = BASIC
   return config
 
 
