@@ -138,12 +138,6 @@ class PTBModel(object):
         outputs, state = tf.nn.static_rnn(cell, inputs,
                                           initial_state=self._initial_state)
 
-        # outputs = []
-        # with tf.variable_scope("RNN"):
-        #     for time_step in range(self.num_steps):
-        #         if time_step > 0: tf.get_variable_scope().reuse_variables()
-        #         (cell_output, state) = cell(inputs[:, time_step, :], state)
-        #         outputs.append(cell_output)
         output = tf.reshape(tf.concat(outputs, 1), [-1, config.hidden_size])
         return output, state
 
@@ -299,6 +293,7 @@ def run_epoch(session, model, eval_op=None, verbose=False):
         "cost": model.cost,
         "final_state": model.final_state,
     }
+
     if eval_op is not None:
         fetches["eval_op"] = eval_op
 
@@ -321,7 +316,7 @@ def run_epoch(session, model, eval_op=None, verbose=False):
                    iters * model.input.batch_size /
                    (time.time() - start_time)))
 
-    return np.exp(costs / iters)
+    return np.exp(costs / iters),state
 
 
 def get_config():
@@ -403,18 +398,15 @@ def main(_):
                     print("Saving model to %s." % FLAGS.save_path)
                     sv.saver.save(session, FLAGS.save_path, global_step=i)
     else:
-        print("before sv ... ")
         with tf.Graph().as_default():
             tf.train.import_meta_graph(metagraph)
             for model in models.values():
                 model.import_ops()
             sv = tf.train.Supervisor(logdir=FLAGS.save_path)
-            print("FLAGS.save_path:",FLAGS.save_path)
-            print("after sv ... ")
             config_proto = tf.ConfigProto(allow_soft_placement=soft_placement)
             with sv.managed_session(config=config_proto) as session:
-                print("after sv.managed_session ... ")
-                test_perplexity = run_epoch(session, mtest)
+                test_perplexity,state = run_epoch(session, mtest)
+                print("state: ",state)
                 print("Test Perplexity: %.3f" % test_perplexity)
 
 if __name__ == "__main__":
