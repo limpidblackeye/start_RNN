@@ -286,7 +286,7 @@ class SmallConfig(object):
   init_scale = 0.1
   learning_rate = 1.0
   max_grad_norm = 5
-  num_layers = 2
+  num_layers = 3
   num_steps = 20
   hidden_size = 200
   max_epoch = 4
@@ -295,7 +295,7 @@ class SmallConfig(object):
   lr_decay = 0.5
   batch_size = 20
   vocab_size = 10000
-  rnn_mode = BLOCK
+  # rnn_mode = BLOCK
 
 
 class MediumConfig(object):
@@ -312,7 +312,7 @@ class MediumConfig(object):
   lr_decay = 0.8
   batch_size = 20
   vocab_size = 10000
-  rnn_mode = BLOCK
+  # rnn_mode = BLOCK
 
 
 class LargeConfig(object):
@@ -329,7 +329,7 @@ class LargeConfig(object):
   lr_decay = 1 / 1.15
   batch_size = 20
   vocab_size = 10000
-  rnn_mode = BLOCK
+  # rnn_mode = BLOCK
 
 
 class TestConfig(object):
@@ -346,7 +346,7 @@ class TestConfig(object):
   lr_decay = 0.5
   batch_size = 20
   vocab_size = 10000
-  rnn_mode = BLOCK
+  # rnn_mode = BLOCK
 
 
 def run_epoch(session, model, eval_op=None, verbose=False):
@@ -398,8 +398,8 @@ def get_config():
     config = TestConfig()
   else:
     raise ValueError("Invalid model: %s", FLAGS.model)
-  if FLAGS.rnn_mode:
-    config.rnn_mode = FLAGS.rnn_mode
+  # if FLAGS.rnn_mode:
+  #   config.rnn_mode = FLAGS.rnn_mode
   # if FLAGS.num_gpus != 1 or tf.__version__ < "1.3.0" :
   #   config.rnn_mode = BASIC
   return config
