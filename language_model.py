@@ -403,16 +403,16 @@ def main(_):
                     print("Saving model to %s." % FLAGS.save_path)
                     sv.saver.save(session, FLAGS.save_path, global_step=sv.global_step)
     else:
-        with tf.Graph().as_default():
-            tf.train.import_meta_graph(metagraph)
-            for model in models.values():
-                model.import_ops()
-            # sv = tf.train.Supervisor(logdir=FLAGS.save_path,init_op=tf.global_variables_initializer())
-            sv = tf.train.Supervisor(logdir=FLAGS.save_path)
-            # config_proto = tf.ConfigProto(allow_soft_placement=soft_placement)
-            with sv.managed_session() as session:
-                test_perplexity = run_epoch(session, mtest)
-                print("Test Perplexity: %.3f" % test_perplexity)
+        # with tf.Graph().as_default():
+        #     tf.train.import_meta_graph(metagraph)
+        #     for model in models.values():
+        #         model.import_ops()
+        # sv = tf.train.Supervisor(logdir=FLAGS.save_path,init_op=tf.global_variables_initializer())
+        sv = tf.train.Supervisor(logdir=FLAGS.save_path)
+        # config_proto = tf.ConfigProto(allow_soft_placement=soft_placement)
+        with sv.managed_session() as session:
+            test_perplexity = run_epoch(session, mtest)
+            print("Test Perplexity: %.3f" % test_perplexity)
 
 if __name__ == "__main__":
   tf.app.run()
