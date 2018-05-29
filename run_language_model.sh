@@ -5,7 +5,6 @@ do
     echo $i
     echo "training ... "
     python3 language_model.py \
-        --model="medium" \
         --data_path="../data/ptb" \
         --save_path="media/root/c5d1565a-6700-4077-be5d-e3c95fba4ae6/language_model/start_RNN/testdir_"$i"/" \
         --run_mode="training" \
@@ -13,7 +12,6 @@ do
 
     echo "testing ... "
     python3 language_model.py \
-        --model="medium" \
         --data_path="../data/ptb" \
         --save_path="media/root/c5d1565a-6700-4077-be5d-e3c95fba4ae6/language_model/start_RNN/testdir_"$i"/" \
         --run_mode="testing" \
