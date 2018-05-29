@@ -320,7 +320,7 @@ def run_epoch(session, model, eval_op=None, verbose=False):
 
 
 def get_config():
-  """Get model config."""
+    """Get model config."""
     config = None
     if FLAGS.model == "small":
         config = SmallConfig()
