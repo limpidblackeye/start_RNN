@@ -374,7 +374,7 @@ def main(_):
         metagraph = tf.train.export_meta_graph()
         soft_placement = False
 
-    if FLAGS.run_mode = "training":
+    if FLAGS.run_mode == "training":
         with tf.Graph().as_default():
             tf.train.import_meta_graph(metagraph)
             for model in models.values():
