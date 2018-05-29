@@ -131,8 +131,8 @@ class PTBModel(object):
         cell = tf.contrib.rnn.MultiRNNCell(
               [make_cell() for _ in range(config.num_layers)], state_is_tuple=True)
 
-        # self._initial_state = cell.zero_state(config.batch_size, tf.float32)
-        # state = self._initial_state
+        self._initial_state = cell.zero_state(config.batch_size, tf.float32)
+        state = self._initial_state
         
         inputs = tf.unstack(inputs, num=self.num_steps, axis=1)
         outputs, state = tf.nn.static_rnn(cell, inputs,
