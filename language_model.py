@@ -408,13 +408,11 @@ def main(_):
             tf.train.import_meta_graph(metagraph)
             for model in models.values():
                 model.import_ops()
-            sv = tf.train.Supervisor(logdir=FLAGS.save_path,init_op=tf.global_variables_initializer())
-            saver = sv.saver
-            # sv = tf.train.Supervisor(logdir=FLAGS.save_path)
+            sv = tf.train.Supervisor(logdir=FLAGS.save_path)
             print("FLAGS.save_path:",FLAGS.save_path)
             print("after sv ... ")
-            # config_proto = tf.ConfigProto(allow_soft_placement=soft_placement)
-            with sv.managed_session() as session:
+            config_proto = tf.ConfigProto(allow_soft_placement=soft_placement)
+            with sv.managed_session(config=config_proto) as session:
                 print("after sv.managed_session ... ")
                 test_perplexity = run_epoch(session, mtest)
                 print("Test Perplexity: %.3f" % test_perplexity)
