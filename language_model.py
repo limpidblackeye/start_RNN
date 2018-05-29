@@ -30,13 +30,26 @@ from tensorflow.python.client import device_lib
 flags = tf.flags
 logging = tf.logging
 
-flags.DEFINE_string("model", "small","A type of model. Options are: small, medium, large, test.")
 flags.DEFINE_string("data_path", None,"Where the training/test data is stored.")
 flags.DEFINE_string("save_path", ".","Model output directory.")
 flags.DEFINE_string("optimizer", "GradientDescentOptimizer", "The method of optimizer. Options are: RMSPropOptimizer, AdamOptimizer, MomentumOptimizer, GradientDescentOptimizer.")
 flags.DEFINE_string("evaluation", "PP", "The method of evaluation. Options are: PP, BLEU, METEOR, ROUGE.")
 flags.DEFINE_string("run_mode", "training", "The mode of running. Options are: training, testing.")
 FLAGS = flags.FLAGS
+
+class Config(object):
+    init_scale = 0.05
+    learning_rate = 1.0
+    max_grad_norm = 5
+    num_layers = 3
+    num_steps = 35
+    hidden_size = 650
+    max_epoch = 6
+    max_max_epoch = 40
+    keep_prob = 0.5
+    lr_decay = 0.8
+    batch_size = 20
+    vocab_size = 10000
 
 class DataInit(object):
     """The input data."""
@@ -214,74 +227,6 @@ class PTBModel(object):
         return self._final_state_name
 
 
-class SmallConfig(object):
-    """Small config."""
-    init_scale = 0.1
-    learning_rate = 1.0
-    max_grad_norm = 5
-    num_layers = 2
-    num_steps = 20
-    hidden_size = 200
-    max_epoch = 4
-    max_max_epoch = 13
-    keep_prob = 1.0
-    lr_decay = 0.5
-    batch_size = 20
-    vocab_size = 10000
-    # rnn_mode = BLOCK
-
-
-class MediumConfig(object):
-    """Medium config."""
-    init_scale = 0.05
-    learning_rate = 1.0
-    max_grad_norm = 5
-    num_layers = 3
-    num_steps = 35
-    hidden_size = 650
-    max_epoch = 6
-    max_max_epoch = 39
-    keep_prob = 0.5
-    lr_decay = 0.8
-    batch_size = 20
-    vocab_size = 10000
-    # rnn_mode = BLOCK
-
-
-class LargeConfig(object):
-    """Large config."""
-    init_scale = 0.04
-    learning_rate = 1.0
-    max_grad_norm = 10
-    num_layers = 2
-    num_steps = 35
-    hidden_size = 1500
-    max_epoch = 14
-    max_max_epoch = 55
-    keep_prob = 0.35
-    lr_decay = 1 / 1.15
-    batch_size = 20
-    vocab_size = 10000
-    # rnn_mode = BLOCK
-
-
-class TestConfig(object):
-    """Tiny config, for testing."""
-    init_scale = 0.1
-    learning_rate = 1.0
-    max_grad_norm = 1
-    num_layers = 1
-    num_steps = 2
-    hidden_size = 2
-    max_epoch = 1
-    max_max_epoch = 1
-    keep_prob = 1.0
-    lr_decay = 0.5
-    batch_size = 20
-    vocab_size = 10000
-    # rnn_mode = BLOCK
-
-
 def run_epoch(session, model, eval_op=None, verbose=False):
     """Runs the model on the given data."""
     start_time = time.time()
@@ -316,22 +261,12 @@ def run_epoch(session, model, eval_op=None, verbose=False):
                    iters * model.input.batch_size /
                    (time.time() - start_time)))
 
-    return np.exp(costs / iters),state
+    return np.exp(costs / iters)
 
 
 def get_config():
     """Get model config."""
-    config = None
-    if FLAGS.model == "small":
-        config = SmallConfig()
-    elif FLAGS.model == "medium":
-        config = MediumConfig()
-    elif FLAGS.model == "large":
-        config = LargeConfig()
-    elif FLAGS.model == "test":
-        config = TestConfig()
-    else:
-        raise ValueError("Invalid model: %s", FLAGS.model)
+    config = Config()
     return config
 
 def main(_):
@@ -405,8 +340,7 @@ def main(_):
             sv = tf.train.Supervisor(logdir=FLAGS.save_path)
             config_proto = tf.ConfigProto(allow_soft_placement=soft_placement)
             with sv.managed_session(config=config_proto) as session:
-                test_perplexity,state = run_epoch(session, mtest)
-                print("state: ",state)
+                test_perplexity = run_epoch(session, mtest)
                 print("Test Perplexity: %.3f" % test_perplexity)
 
 if __name__ == "__main__":
