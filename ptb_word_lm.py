@@ -77,7 +77,7 @@ flags.DEFINE_string(
     "A type of model. Possible options are: small, medium, large.")
 flags.DEFINE_string("data_path", None,
                     "Where the training/test data is stored.")
-flags.DEFINE_string("save_path", None,
+flags.DEFINE_string("save_path", ".",
                     "Model output directory.")
 flags.DEFINE_bool("use_fp16", False,
                   "Train using 16-bit floats instead of 32bit floats")
@@ -303,7 +303,7 @@ class MediumConfig(object):
   init_scale = 0.05
   learning_rate = 1.0
   max_grad_norm = 5
-  num_layers = 2
+  num_layers = 3
   num_steps = 35
   hidden_size = 650
   max_epoch = 6
