@@ -131,14 +131,19 @@ class PTBModel(object):
         cell = tf.contrib.rnn.MultiRNNCell(
               [make_cell() for _ in range(config.num_layers)], state_is_tuple=True)
 
-        self._initial_state = cell.zero_state(config.batch_size, tf.float32)
-        state = self._initial_state
-        outputs = []
-        with tf.variable_scope("RNN"):
-            for time_step in range(self.num_steps):
-                if time_step > 0: tf.get_variable_scope().reuse_variables()
-                (cell_output, state) = cell(inputs[:, time_step, :], state)
-                outputs.append(cell_output)
+        # self._initial_state = cell.zero_state(config.batch_size, tf.float32)
+        # state = self._initial_state
+        
+        inputs = tf.unstack(inputs, num=self.num_steps, axis=1)
+        outputs, state = tf.nn.static_rnn(cell, inputs,
+                                          initial_state=self._initial_state)
+
+        # outputs = []
+        # with tf.variable_scope("RNN"):
+        #     for time_step in range(self.num_steps):
+        #         if time_step > 0: tf.get_variable_scope().reuse_variables()
+        #         (cell_output, state) = cell(inputs[:, time_step, :], state)
+        #         outputs.append(cell_output)
         output = tf.reshape(tf.concat(outputs, 1), [-1, config.hidden_size])
         return output, state
 
@@ -150,11 +155,11 @@ class PTBModel(object):
         self._name = name
         ops = {util.with_prefix(self._name, "cost"): self._cost}
         if self._is_training:
-          ops.update(lr=self._lr, new_lr=self._new_lr, lr_update=self._lr_update)
-          if self._rnn_params:
-            ops.update(rnn_params=self._rnn_params)
+            ops.update(lr=self._lr, new_lr=self._new_lr, lr_update=self._lr_update)
+            if self._rnn_params:
+                ops.update(rnn_params=self._rnn_params)
         for name, op in ops.items():
-          tf.add_to_collection(name, op)
+            tf.add_to_collection(name, op)
         self._initial_state_name = util.with_prefix(self._name, "initial")
         self._final_state_name = util.with_prefix(self._name, "final")
         util.export_state_tuples(self._initial_state, self._initial_state_name)
@@ -407,9 +412,6 @@ def main(_):
             with sv.managed_session(config=config_proto) as session:
                 test_perplexity = run_epoch(session, mtest)
                 print("Test Perplexity: %.3f" % test_perplexity)
-                if FLAGS.save_path:
-                    print("Saving model to %s." % FLAGS.save_path)
-                    sv.saver.save(session, FLAGS.save_path, global_step=sv.global_step)
 
 if __name__ == "__main__":
   tf.app.run()
