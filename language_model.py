@@ -31,7 +31,7 @@ flags = tf.flags
 logging = tf.logging
 
 flags.DEFINE_string("data_path", None,"Where the training/test data is stored.")
-flags.DEFINE_string("save_path", ".","Model output directory.")
+flags.DEFINE_string("save_path", "./testdir/","Model output directory.")
 flags.DEFINE_string("optimizer", "GradientDescentOptimizer", "The method of optimizer. Options are: RMSPropOptimizer, AdamOptimizer, MomentumOptimizer, GradientDescentOptimizer.")
 flags.DEFINE_string("evaluation", "PP", "The method of evaluation. Options are: PP, BLEU, METEOR, ROUGE.")
 flags.DEFINE_string("run_mode", "training", "The mode of running. Options are: training, testing.")
